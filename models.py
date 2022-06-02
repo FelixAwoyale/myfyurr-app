@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 
+
+
 db =  SQLAlchemy()
 
 
@@ -84,8 +86,8 @@ class Artist(db.Model):
 
 class Show(db.Model):
     __tablename__ = 'shows'
-    id = db.Column(db.Integer, primary_Key=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
     venue_id =db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
     start_time =db.Column(db.DateTime, nullable=False)
 
@@ -108,6 +110,9 @@ class Show(db.Model):
             'start_time': self.start_time.strftime('%Y-%m-%d %H:%M:%S')
 
         }
+
+
+db.create_all()
 
     
 
