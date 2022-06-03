@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------------#
 
 import json
+from pyexpat import version_info
 from unicodedata import name
 import dateutil.parser
 import babel
@@ -46,7 +47,7 @@ class Venue(db.Model):
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
+    image_link = db.Column(db.String(1000))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, default=False)
@@ -181,10 +182,24 @@ def index():
 
 @app.route('/venues')
 def venues():
+  # venues = Venue.query.order_by(Venue.state, Venue.city).all()
+  # data=[]
+  # tmp ={}
+  # prev_city = None
+  # prev_state = None
+  # for venue in venues:
+  #   venue_data = {
+  #     'id':venue.id,
+  #     'name': venue.name,
+
+  #   }
+  #   if venue.city == prev_city and venue.state == prev_state:
+  #     tmp['venues'].append(venue_data)
+  #   else:
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
 
-  return render_template('pages/venues.html', areas=Venue.query.all());
+  return render_template('pages/venues.html', areas=Venue.query.all(Venue.city, Venue.state ));
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -346,17 +361,17 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
-  return render_template('pages/artists.html', artists=data)
+  # data=[{
+  #   "id": 4,
+  #   "name": "Guns N Petals",
+  # }, {
+  #   "id": 5,
+  #   "name": "Matt Quevedo",
+  # }, {
+  #   "id": 6,
+  #   "name": "The Wild Sax Band",
+  # }]
+  return render_template('pages/artists.html', artists=Artist.query.all())
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
@@ -518,9 +533,35 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-
+  error= False
+  try:
+    artist = Artist()
+    artist.name = request.form['name']
+    artist.city = request.form['city']
+    artist.state = request.form['state']
+    # artist.address = request.form['address']
+    artist.phone = request.form['phone']
+    artist.image_link=request.form['image_link']
+    artist.facebook_link = request.form['facebook_link']
+    artist.website_link = request.form['website_link']
+    # venue.seeking_talent = request.form['seeking_talent']
+    artist.seeking_description = request.form['seeking_description']
+    tmp_genres = request.form.getlist('genres')
+    artist.genres = ','.join(tmp_genres)
+    db.session.add(artist)
+    db.session.commit()
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+    if error:
+      flash('an error occured')
+    else:
+       flash('Artist' + request.form['name'] + ' was successfully listed!')
   # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
+  # flash('Artist ' + request.form['name'] + ' was successfully listed!')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
   return render_template('pages/home.html')
