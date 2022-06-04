@@ -182,8 +182,7 @@ def venues():
 def search_venues():
   
   search_content = request.form.get('search_term')
-  search_results = Venue.query.filter(Venue.name.like('%' + search_content + '%'))
-  search_results = Venue.order_by(Venue.id).all()
+  search_results = Venue.query.filter('%{}%' .format(search_content)).all()
 
   response = {}
   response['count'] = len(search_results)
@@ -250,13 +249,16 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
     return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
+  try: 
+    Venue.query.filter_by(id=Venue.id).delete()
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+  
   return None
 
 #  Artists
@@ -283,8 +285,7 @@ def search_artists():
   # search for "band" should return "The Wild Sax Band".
   
   search_content = request.form.get('search_term')
-  search_results = Artist.query.filter(Artist.name.like('%' + search_content + '%'))
-  search_results = Artist.order_by(Artist.id).all()
+  search_results = Artist.query.filter(Venue.name.ilike('%{}%' .format(search_content))).all()
 
   response = {}
   response['count'] = len(search_results)
@@ -298,17 +299,10 @@ def search_artists():
 def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
-  artist = Artist.query.get(artist_id)
+  artist = Artist.query.filter_by(artist_id).first()
   
 
-  data = []
-  for artist in artists:
-        data.append({
-            'artist_id': artist.id,
-            'artist_name': artist.name,
-            
-        })
-
+  
   
 
   # data = artist.to_dict()
@@ -316,7 +310,7 @@ def show_artist(artist_id):
   # data['name'] = name
 
   
-  return render_template('pages/show_artist.html', artist=data)
+  return render_template('pages/show_artist.html', artist=artist)
   
 
 #  Update
